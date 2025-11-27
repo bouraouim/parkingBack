@@ -1,0 +1,182 @@
+Parking Payment Machine Assistant — Backend Requirements 
+Overview
+
+Build an Express.js backend (Node.js) that supports a React Native Android app used by parking workers to manage parking payment machine missions.
+
+1. Authentication
+
+Login with username + password.
+
+Use JWT for authentication.
+
+Return { token, user: { id, username } } on login.
+
+Users stay logged in on the client (JWT stored in device).
+
+Create a simple User model:
+
+User {
+  username: string
+  passwordHash: string
+  fcmTokens: [ { token: string, createdAt: date } ]
+}
+
+2. FCM Token Handling
+
+Client obtains an FCM token after login.
+
+Endpoint to register token:
+POST /api/users/:id/fcm-token
+
+{ token: string }
+
+
+Add token to user’s fcmTokens array (no duplicates).
+
+On token refresh → client calls endpoint again to update.
+
+Optional: endpoint to remove token.
+
+3. Missions & Notifications
+
+Each FCM push notification contains a mission.
+
+Mission Payload (from server or FCM)
+{
+  id: string,
+  date: string,
+  cashier: string,
+  machineName: string,
+  collect: {
+    noteAmount: number,
+    coinAmount: number
+  },
+  refill: {
+    coins: {
+      amount: number,
+      coinTypes: { dynamicKey: number }
+    },
+    notes: {
+      amount: number,
+      noteTypes: { dynamicKey: number }
+    }
+  },
+  maintenance: [string],
+  qrCode: string
+}
+
+Mission Model
+Mission {
+  missionId: string (unique)
+  payload: object (full mission data)
+  status: "unopened" | "in_progress" | "completed"
+  openedAt?: date
+  openedBy?: userId
+  completedAt?: date
+  history: [
+    { action: string, by: userId, at: date, note?: string }
+  ]
+}
+
+4. Mission API
+GET /api/missions
+
+Return list of missions
+
+Sort: unopened first, then by date
+
+Client uses pull-to-refresh
+
+Used on app startup after login
+
+GET /api/missions/:id
+
+Return full mission payload + metadata
+
+POST /api/missions/:id/open
+
+Mark mission as in_progress if it’s unopened
+
+Set openedAt and openedBy
+
+POST /api/missions/:id/update
+
+Request:
+
+{
+  status: "completed" | "in_progress",
+  tasks?: object,    // optional validation results
+  note?: string
+}
+
+
+Behavior:
+
+If completed → set status to completed + timestamp
+
+On server update failure → return error (client keeps “in progress”)
+
+5. Admin / Internal
+POST /api/missions
+
+Used by admin tools or system to create missions.
+
+Accepts full payload.
+
+Optionally triggers FCM send to target worker(s).
+
+6. FCM Server Integration
+
+Use Firebase Admin SDK.
+
+Send data messages (preferred), including:
+
+{ id: missionId, payload: JSON.stringify(missionPayload) }
+
+
+App handles data in background/foreground.
+
+7. Server URL Settings (Client Behavior)
+
+Not backend code, but important:
+
+Client prompts user to enter server URL on first launch.
+
+All API requests use that base URL.
+
+Backend does not need to implement this; just be aware.
+
+8. Tech Stack Requirements
+
+Node.js + Express
+
+MongoDB + Mongoose
+
+JWT auth
+
+bcrypt for passwords
+
+Firebase Admin SDK
+
+Joi validation (optional but recommended)
+
+9. Endpoints (Summary)
+Method	Endpoint	Description
+POST	/auth/login	Login & return JWT
+POST	/users/:id/fcm-token	Register/refresh FCM token
+GET	/missions	List missions
+GET	/missions/:id	Get mission details
+POST	/missions/:id/open	Mark as in_progress
+POST	/missions/:id/update	Submit mission (completed or in_progress)
+POST	/missions	Create mission (admin)
+10. Behavior Rules
+
+Mission opened → status becomes in_progress.
+
+Mission submit → may or may not complete all tasks.
+
+On submit failure → mission stays in_progress; client retries later.
+
+Keep full mission payload as-is (dynamic keys allowed).
+
+Store FCM tokens for each user.
