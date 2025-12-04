@@ -21,20 +21,14 @@ const missionSchema = new mongoose.Schema({
     },
     collect: {
       notes: {
-        amount: {
-          type: Number,
-          required: true
-        },
+        amount: Number,
         completed: {
           type: Boolean,
           default: false
         }
       },
       coins: {
-        amount: {
-          type: Number,
-          required: true
-        },
+        amount: Number,
         completed: {
           type: Boolean,
           default: false
@@ -43,28 +37,16 @@ const missionSchema = new mongoose.Schema({
     },
     refill: {
       coins: {
-        amount: {
-          type: Number,
-          required: true
-        },
-        coinTypes: {
-          type: mongoose.Schema.Types.Mixed,
-          required: true
-        },
+        amount: Number,
+        coinTypes: mongoose.Schema.Types.Mixed,
         completed: {
           type: Boolean,
           default: false
         }
       },
       notes: {
-        amount: {
-          type: Number,
-          required: true
-        },
-        noteTypes: {
-          type: mongoose.Schema.Types.Mixed,
-          required: true
-        },
+        amount: Number,
+        noteTypes: mongoose.Schema.Types.Mixed,
         completed: {
           type: Boolean,
           default: false
@@ -74,8 +56,14 @@ const missionSchema = new mongoose.Schema({
     maintenance: [
       {
         task: {
-          type: String,
-          required: true
+          en: {
+            type: String,
+            required: true
+          },
+          fr: {
+            type: String,
+            required: true
+          }
         },
         completed: {
           type: Boolean,
@@ -93,12 +81,17 @@ const missionSchema = new mongoose.Schema({
     enum: ['unopened', 'in_progress', 'completed'],
     default: 'unopened'
   },
+  assignedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  comment: {
+    type: String,
+    default: ''
+  },
   openedAt: {
     type: Date
-  },
-  openedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
   },
   completedAt: {
     type: Date

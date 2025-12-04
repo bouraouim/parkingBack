@@ -4,21 +4,71 @@
  *   get:
  *     tags:
  *       - Missions
- *     summary: Get all missions
- *     description: Retrieve list of all missions sorted by status and date
+ *     summary: Get all missions for a user
+ *     description: Retrieve list of all missions assigned to a specific user, sorted by status and date
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: username
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Username to filter missions by
+ *         example: worker1
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *         example: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of missions per page
+ *         example: 10
  *     responses:
  *       200:
- *         description: List of missions
+ *         description: Paginated list of missions
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Mission'
+ *               type: object
+ *               properties:
+ *                 missions:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Mission'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 50
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 5
+ *                     hasNextPage:
+ *                       type: boolean
+ *                       example: true
+ *                     hasPrevPage:
+ *                       type: boolean
+ *                       example: false
+ *       400:
+ *         description: Username is required
  *       401:
  *         description: Unauthorized
+ *       404:
+ *         description: User not found
  *   post:
  *     tags:
  *       - Missions
@@ -91,8 +141,34 @@
  *               maintenance:
  *                 type: array
  *                 items:
- *                   type: string
- *                 example: ["Clean screen", "Check printer"]
+ *                   type: object
+ *                   required:
+ *                     - task
+ *                   properties:
+ *                     task:
+ *                       type: object
+ *                       required:
+ *                         - en
+ *                         - fr
+ *                       properties:
+ *                         en:
+ *                           type: string
+ *                           example: Clean screen
+ *                         fr:
+ *                           type: string
+ *                           example: Nettoyer l'écran
+ *                     completed:
+ *                       type: boolean
+ *                       default: false
+ *                 example:
+ *                   - task:
+ *                       en: Clean screen
+ *                       fr: Nettoyer l'écran
+ *                     completed: false
+ *                   - task:
+ *                       en: Check printer
+ *                       fr: Vérifier l'imprimante
+ *                     completed: false
  *               qrCode:
  *                 type: string
  *                 example: QR12345
@@ -186,21 +262,56 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - status
  *             properties:
  *               status:
  *                 type: string
  *                 enum: [in_progress, completed]
  *                 example: completed
- *               tasks:
- *                 type: object
- *                 description: Optional task validation results
- *                 example: { "collected": true, "refilled": true }
- *               note:
+ *               comment:
  *                 type: string
- *                 description: Optional note
+ *                 description: Optional comment before submitting
  *                 example: All tasks completed successfully
+ *               collect:
+ *                 type: object
+ *                 properties:
+ *                   notes:
+ *                     type: object
+ *                     properties:
+ *                       completed:
+ *                         type: boolean
+ *                         example: true
+ *                   coins:
+ *                     type: object
+ *                     properties:
+ *                       completed:
+ *                         type: boolean
+ *                         example: true
+ *               refill:
+ *                 type: object
+ *                 properties:
+ *                   coins:
+ *                     type: object
+ *                     properties:
+ *                       completed:
+ *                         type: boolean
+ *                         example: true
+ *                   notes:
+ *                     type: object
+ *                     properties:
+ *                       completed:
+ *                         type: boolean
+ *                         example: false
+ *               maintenance:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     index:
+ *                       type: number
+ *                       example: 0
+ *                     completed:
+ *                       type: boolean
+ *                       example: true
  *     responses:
  *       200:
  *         description: Mission updated successfully

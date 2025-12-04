@@ -24,7 +24,7 @@ async function createUser(username, password) {
     const user = new User({
       username,
       passwordHash,
-      fcmTokens: []
+      pushTokens: []
     });
     
     await user.save();

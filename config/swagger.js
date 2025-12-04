@@ -86,8 +86,29 @@ const options = {
                 },
                 maintenance: {
                   type: 'array',
-                  items: { type: 'string' },
-                  example: ['Clean screen', 'Check printer']
+                  items: {
+                    type: 'object',
+                    required: ['task'],
+                    properties: {
+                      task: {
+                        type: 'object',
+                        required: ['en', 'fr'],
+                        properties: {
+                          en: { type: 'string', example: 'Clean screen' },
+                          fr: { type: 'string', example: 'Nettoyer l\'écran' }
+                        }
+                      },
+                      completed: {
+                        type: 'boolean',
+                        default: false,
+                        example: false
+                      }
+                    }
+                  },
+                  example: [
+                    { task: { en: 'Clean screen', fr: 'Nettoyer l\'écran' }, completed: false },
+                    { task: { en: 'Check printer', fr: 'Vérifier l\'imprimante' }, completed: false }
+                  ]
                 },
                 qrCode: { type: 'string', example: 'QR12345' }
               }
